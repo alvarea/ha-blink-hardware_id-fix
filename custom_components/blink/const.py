@@ -5,12 +5,21 @@ from homeassistant.const import Platform
 DOMAIN = "blink"
 # PATCH (alvarea): Blink's OAuth server rejects non-UUID hardware_id values
 # with HTTP 406 Not Acceptable. The upstream string "Home Assistant" no
-# longer works. Using a fixed, private UUID here (instead of a random one,
-# and instead of a publicly shared one) keeps the value stable across
-# restarts/reauth, which blinkpy needs for token persistence, without
-# colliding with other users' identities on Blink's servers.
-# See: home-assistant/core#158760, #173520, #176708, #177284
-HARDWARE_ID = "7d6596ff-a5f5-43c5-9ecb-a4fd9ed373e1"
+# longer works.
+#
+# ⚠️ REQUIRED: replace the placeholder below with YOUR OWN randomly
+# generated UUID before installing. Do NOT reuse the same value across
+# different Blink accounts/installations — Blink's servers may flag or
+# block a hardware_id that's shared by many unrelated accounts, causing
+# authentication to fail again for everyone using it.
+#
+# Generate your own:
+#   macOS/Linux:  uuidgen
+#   Python:       python3 -c "import uuid; print(uuid.uuid4())"
+#
+# See README.md for full instructions.
+# Bug references: home-assistant/core#158760, #173520, #176708, #177284
+HARDWARE_ID = "REPLACE-WITH-YOUR-OWN-UUID-0000-000000000000"
 
 CONF_MIGRATE = "migrate"
 CONF_CAMERA = "camera"
