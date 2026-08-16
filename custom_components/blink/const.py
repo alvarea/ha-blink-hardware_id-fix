@@ -3,12 +3,14 @@
 from homeassistant.const import Platform
 
 DOMAIN = "blink"
-# PATCH (alvarea): Blink's OAuth server now rejects non-UUID hardware_id values
-# with HTTP 406 Not Acceptable. The upstream string "Home Assistant" no longer
-# works. Using a fixed UUID here (instead of a random one) keeps the value
-# stable across restarts/reauth, which blinkpy needs for token persistence.
-# See: home-assistant/core#158760, #173520, #176708
-HARDWARE_ID = "a1b2c3d4-e5f6-47a8-9b12-abcdef123456"
+# PATCH (alvarea): Blink's OAuth server rejects non-UUID hardware_id values
+# with HTTP 406 Not Acceptable. The upstream string "Home Assistant" no
+# longer works. Using a fixed, private UUID here (instead of a random one,
+# and instead of a publicly shared one) keeps the value stable across
+# restarts/reauth, which blinkpy needs for token persistence, without
+# colliding with other users' identities on Blink's servers.
+# See: home-assistant/core#158760, #173520, #176708, #177284
+HARDWARE_ID = "7d6596ff-a5f5-43c5-9ecb-a4fd9ed373e1"
 
 CONF_MIGRATE = "migrate"
 CONF_CAMERA = "camera"
