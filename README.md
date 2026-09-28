@@ -9,48 +9,9 @@ with `406 Not Acceptable`) caused by Blink's servers now requiring
 `hardware_id` to be a UUID, while Home Assistant still sends the literal
 string `"Home Assistant"`.
 
-## ⚠️ Before installing: generate YOUR OWN UUID
-
-**Do not use the placeholder UUID that ships in this repo's `const.py`.**
-Each installation needs its own private, unique `hardware_id`. Reusing the
-same value across different Blink accounts/installations can cause Blink's
-anti-fraud systems to flag or block that value — which is exactly what
-happened to the original author after this fix got shared in the Home
-Assistant community forum with a real, working UUID baked into the code.
-Authentication broke again for everyone using the shared value.
-
-**Generate your own before installing:**
-
-```bash
-# macOS / Linux
-uuidgen
-
-# Python (any OS)
-python3 -c "import uuid; print(uuid.uuid4())"
-```
-
-Then edit `custom_components/blink/const.py` and replace the
-`HARDWARE_ID` placeholder with your own generated value, **before**
-adding this as a HACS custom repository / before your first download.
-
-If you already installed an earlier version of this fix using the shared
-UUID, generate a new private one and update your local `const.py`, then
-push the change to your own fork/copy of this repo and update via HACS.
-
-## What changes
-
-One real change, in `custom_components/blink/const.py`:
-
-```diff
-- HARDWARE_ID = "Home Assistant"
-+ HARDWARE_ID = "<your-own-private-uuid>"
-```
-
-Everything else is identical to the official HA 2026.8.2 code. A
-`"version"` field was also added to `manifest.json`, which HACS requires
-for custom integrations, and `blinkpy` is pinned to `0.25.9` (matching
-HA 2026.8.x), which also resolves a separate `TokenRefreshFailed` bug
-affecting arm/disarm and camera image refresh (see below).
+The integration automatically creates a UUIDv4-formatted `hardware_id` from
+the email address entered during setup, saves it in Home Assistant, and
+reuses it thereafter. No manual UUID generation or source edits are required.
 
 ## Symptoms this fixes
 
@@ -85,16 +46,12 @@ happen.
 
 ## Installation (via HACS)
 
-1. Generate your own private UUID (see above) and edit
-   `custom_components/blink/const.py` in your own copy/fork of this repo
-2. In HACS → menu (⋮) → **Custom repositories**
-3. Add this repository's URL, category **Integration**
-4. Install "Blink (hardware_id fix)"
-5. Restart Home Assistant
-6. Go to your existing Blink integration and click **Reauthenticate** (or
-   remove it and add it again from scratch) — this is expected: changing
-   `hardware_id` invalidates any previous session, so you'll need to pass
-   the 2FA step again once
+1. In HACS → menu (⋮) → **Custom repositories**
+2. Add this repository's URL, category **Integration**
+3. Install "Blink (hardware_id fix)"
+4. Restart Home Assistant
+5. If an existing Blink integration needs to be authenticated again, click
+   **Reauthenticate** (or remove it and add it again from scratch)
 
 You should now be prompted for the 2FA PIN instead of getting an immediate
 "Invalid authentication" error, and arm/disarm actions should stop failing
@@ -117,7 +74,6 @@ with `TokenRefreshFailed`.
 This repo is a copy of `homeassistant/components/blink` from HA Core
 2026.8.2, with the changes above. If you want to rebase it onto a newer
 HA Core version yourself, diff `const.py` and `manifest.json` against the
-upstream files for your version and reapply the same changes (remembering
-to use your own private UUID, not a shared one).
+upstream files for your version and reapply the same changes.
 
 Issues and PRs welcome.

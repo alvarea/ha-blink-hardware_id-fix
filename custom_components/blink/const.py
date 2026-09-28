@@ -1,25 +1,28 @@
 """Constants for Blink."""
 
+from hashlib import sha256
+from uuid import UUID
+
 from homeassistant.const import Platform
 
 DOMAIN = "blink"
-# PATCH (alvarea): Blink's OAuth server rejects non-UUID hardware_id values
-# with HTTP 406 Not Acceptable. The upstream string "Home Assistant" no
-# longer works.
-#
-# ⚠️ REQUIRED: replace the placeholder below with YOUR OWN randomly
-# generated UUID before installing. Do NOT reuse the same value across
-# different Blink accounts/installations — Blink's servers may flag or
-# block a hardware_id that's shared by many unrelated accounts, causing
-# authentication to fail again for everyone using it.
-#
-# Generate your own:
-#   macOS/Linux:  uuidgen
-#   Python:       python3 -c "import uuid; print(uuid.uuid4())"
-#
-# See README.md for full instructions.
+# Blink's OAuth server rejects non-UUID hardware_id values with HTTP 406
+# Not Acceptable. The upstream string "Home Assistant" no longer works.
 # Bug references: home-assistant/core#158760, #173520, #176708, #177284
-HARDWARE_ID = "REPLACE-WITH-YOUR-OWN-UUID-0000-000000000000"
+
+
+def hardware_id_from_email(email: str) -> str:
+    """Return a stable UUIDv4-formatted hardware ID for an email address.
+
+    UUIDv4 values are normally random. This intentionally derives the UUID
+    bytes from the normalized email address so the same Blink account keeps
+    the same hardware ID across restarts and reauthentication. UUID version
+    and variant bits are set explicitly to satisfy services that validate the
+    UUIDv4 format.
+    """
+    normalized_email = email.strip().casefold()
+    digest = sha256(f"blink-hardware-id:{normalized_email}".encode()).digest()
+    return str(UUID(bytes=digest[:16], version=4))
 
 CONF_MIGRATE = "migrate"
 CONF_CAMERA = "camera"

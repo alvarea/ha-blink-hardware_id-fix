@@ -22,5 +22,5 @@
   "iot_class": "cloud_polling",
   "loggers": ["blinkpy"],
   "requirements": ["blinkpy==0.25.9"],
-  "version": "2026.8.2-hwidfix2"
+  "version": "2026.8.2-hwidfix5"
 }

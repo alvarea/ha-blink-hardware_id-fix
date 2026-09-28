@@ -96,7 +96,10 @@ def _async_update_entry_data(
     hass: HomeAssistant, entry: BlinkConfigEntry, blink: Blink
 ) -> None:
     """Update the config entry data after token refresh."""
-    hass.config_entries.async_update_entry(entry, data=blink.auth.login_attributes)
+    data = dict(blink.auth.login_attributes)
+    if hardware_id := entry.data.get("hardware_id"):
+        data["hardware_id"] = hardware_id
+    hass.config_entries.async_update_entry(entry, data=data)
 
 
 @callback

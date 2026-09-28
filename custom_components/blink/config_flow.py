@@ -19,7 +19,7 @@ from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, HARDWARE_ID
+from .const import DOMAIN, hardware_id_from_email
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,11 +49,35 @@ class BlinkConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize the blink flow."""
         self.auth: Auth | None = None
         self.blink: Blink | None = None
+        self.hardware_id: str | None = None
+
+    def _hardware_id_for_user_input(self, user_input: dict[str, Any]) -> str:
+        """Return the stored hardware ID, or create one for a new entry."""
+        if self.source == SOURCE_REAUTH:
+            entry = self._get_reauth_entry()
+        elif self.source == SOURCE_RECONFIGURE:
+            entry = self._get_reconfigure_entry()
+        else:
+            entry = None
+
+        if (
+            entry is not None
+            and isinstance(hardware_id := entry.data.get("hardware_id"), str)
+            and hardware_id
+        ):
+            return hardware_id
+
+        hardware_id = hardware_id_from_email(user_input[CONF_USERNAME])
+        return hardware_id
 
     async def _handle_user_input(self, user_input: dict[str, Any]):
         """Handle user input."""
+        self.hardware_id = self._hardware_id_for_user_input(user_input)
         self.auth = Auth(
-            {**user_input, "hardware_id": HARDWARE_ID},
+            {
+                **user_input,
+                "hardware_id": self.hardware_id,
+            },
             no_prompt=True,
             session=async_get_clientsession(self.hass),
         )
@@ -197,16 +221,20 @@ class BlinkConfigFlow(ConfigFlow, domain=DOMAIN):
     def _async_finish_flow(self) -> ConfigFlowResult:
         """Finish with setup."""
         assert self.auth
+        assert self.hardware_id
+
+        # Persist independently of blinkpy's login_attributes implementation.
+        data = {**self.auth.login_attributes, "hardware_id": self.hardware_id}
 
         if self.source in (SOURCE_REAUTH, SOURCE_RECONFIGURE):
             return self.async_update_reload_and_abort(
                 self._get_reauth_entry()
                 if self.source == SOURCE_REAUTH
                 else self._get_reconfigure_entry(),
-                data_updates=self.auth.login_attributes,
+                data_updates=data,
             )
 
-        return self.async_create_entry(title=DOMAIN, data=self.auth.login_attributes)
+        return self.async_create_entry(title=DOMAIN, data=data)
 
 
 class InvalidAuth(HomeAssistantError):
